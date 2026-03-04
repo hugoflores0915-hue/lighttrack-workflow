@@ -1,1 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LightTrack PM — Uplink | A Watco Company</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; background: #0D1B2E; color: #E8EDF5; min-height: 100vh; }
+    ::-webkit-scrollbar { height: 4px; width: 4px; }
+    ::-webkit-scrollbar-track { background: #0D1B2E; }
+    ::-webkit-scrollbar-thumb { background: #1A3560; border-radius: 2px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.25s ease; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
 
+  <script type="text/babel">
+    const { useState } = React;
+
+    const PHASES = [
+      {
+        id: 1,
+        name: "DISCOVERY",
+        sub: "Site Assessment",
+        color: "#1A3560",
+        accent: "#2E5FA3",
+        icon: "🔍",
+        steps: [
+          {
+            tag: "SITE VISIT REQUESTED",
+            label: "Site Visit Request",
+            owner: "Sales / PM",
+            actions: ["Receive client inquiry or internal request", "Schedule site visit with site contact", "Create project record in LightTrack PM", "Assign project number"],
+            docs: ["Site visit request form", "Client contact info", "Signed NDA (if required)"],
+          },
+          {
+            tag: "SURVEY IN PROGRESS",
+            label: "Site Survey",
+            owner: "Field Tech / PM",
+            actions: ["Conduct on-site walkthrough", "Document existing infrastructure", "Photograph all relevant areas", "Identify power, conduit & network conditions", "Note hazards or access restrictions"],
+            docs: ["Site survey report", "Site photographs", "Floor plan / sketch", "Infrastructure notes"],
+          },
+          {
+            tag: "SURVEY COMPLETE",
+            label: "Survey Complete",
+            owner: "PM",
+            actions: ["Review and validate all survey data", "Upload all documents to LightTrack PM", "Flag any design constraints for engineering"],
+            docs: ["Completed survey checklist", "Photo package uploaded"],
+          },
+        ],
+      },
+      {
+        id: 2,
+        name: "DESIGN &",
+        sub: "Approvals",
+        color: "#2E5FA3",
+        accent: "#4A7FC1",
+        icon: "📐",
+        steps: [
+          {
+            tag: "DESIGN IN PROGRESS",
+            label: "System Design",
+            owner: "Engineering / PM",
+            actions: ["Design camera / access / radio plan", "Select equipment and bill of materials", "Create drawings in BlueBeam / CAD", "Validate against site survey data"],
+            docs: ["System design drawings", "Equipment list / BOM", "Coverage maps (radio)"],
+          },
+          {
+            tag: "PROPOSAL IN REVIEW",
+            label: "Proposal Prep",
+            owner: "PM / Sales",
+            actions: ["Build labor and material estimate", "Prepare formal proposal document", "Internal PM review and sign-off", "Generate proposal in LightTrack PM"],
+            docs: ["Proposal document", "BOM / pricing sheet", "Subcontractor quotes (if any)"],
+          },
+          {
+            tag: "PROPOSAL APPROVED",
+            label: "Client Approval",
+            owner: "Client / PM",
+            actions: ["Send proposal to client for review", "Address questions or scope revisions", "Obtain signed approval / PO from client", "Log approval in LightTrack PM"],
+            docs: ["Signed proposal", "Client PO or LOA", "Scope change log (if revised)"],
+          },
+          {
+            tag: "NETWORK REVIEW",
+            label: "Network / IT Review",
+            owner: "IT / Network Eng.",
+            actions: ["Submit network design for client IT review", "Confirm VLAN, IP schema, firewall rules", "Address cybersecurity requirements", "Obtain network approval in writing"],
+            docs: ["Network design diagram", "IP address plan", "IT approval email / form"],
+          },
+          {
+            tag: "NETWORK APPROVED",
+            label: "Network Approved",
+            owner: "PM / IT",
+            actions: ["Confirm all IT / OT requirements satisfied", "Update design documents with any changes", "Mark network approval in LightTrack PM"],
+            docs: ["Signed IT approval", "Updated network diagram"],
+          },
+        ],
+      },
+      {
+        id: 3,
+        name: "PROCUREMENT",
+        sub: "& Mobilization",
+        color: "#7B3FA0",
+        accent: "#9B5FC0",
+        icon: "📦",
+        steps: [
+          {
+            tag: "MATERIALS ORDERED",
+            label: "Material Ordering",
+            owner: "PM / Procurement",
+            actions: ["Submit final BOM to WESCO PIR", "Confirm pricing and lead times", "Generate PO in accounting system", "Log PO number in LightTrack PM"],
+            docs: ["Purchase orders", "Vendor order confirmations", "Expected delivery dates"],
+          },
+          {
+            tag: "MATERIALS STAGED",
+            label: "Receipt & Staging",
+            owner: "Warehouse / PM",
+            actions: ["Receive and inspect all materials", "Verify against BOM — note any shortages", "Stage and label equipment by project", "Update LightTrack PM with receipt status"],
+            docs: ["Receiving inspection checklist", "Packing slip / invoice", "Damage or shortage report (if any)"],
+          },
+          {
+            tag: "CREW SCHEDULED",
+            label: "Crew & Schedule",
+            owner: "PM",
+            actions: ["Confirm installation crew availability", "Schedule site access with client", "Arrange subcontractors if needed", "Issue work orders in LightTrack PM"],
+            docs: ["Installation schedule", "Work order", "Subcontractor agreement (if applicable)"],
+          },
+        ],
+      },
+      {
+        id: 4,
+        name: "INSTALLATION",
+        sub: "& Commissioning",
+        color: "#E07B2A",
+        accent: "#F09A4A",
+        icon: "🔧",
+        steps: [
+          {
+            tag: "INSTALLATION ACTIVE",
+            label: "Installation",
+            owner: "Field Tech",
+            actions: ["Execute installation per approved design", "Follow low-voltage / safety standards", "Log daily progress notes in LightTrack PM", "Photograph work in progress"],
+            docs: ["Daily progress photos", "Install log / field notes", "As-built markup (running)"],
+          },
+          {
+            tag: "COMMISSIONING",
+            label: "Configuration",
+            owner: "Field Tech / Engineer",
+            actions: ["Configure cameras, VMS, access controllers, or radios", "Apply IP addressing per approved plan", "Set up recording schedules, credentials, and policies", "Test all devices for connectivity and function"],
+            docs: ["Configuration worksheet", "Device credential log (secure)", "Test results / screenshots"],
+          },
+          {
+            tag: "QC IN PROGRESS",
+            label: "QC Check",
+            owner: "PM / Lead Tech",
+            actions: ["Conduct internal QC walkthrough", "Verify all devices online and recording", "Confirm coverage meets design intent", "Punch list any deficiencies"],
+            docs: ["QC checklist", "Punch list", "Pre-acceptance photos"],
+          },
+          {
+            tag: "DOCS IN REVIEW",
+            label: "Documentation",
+            owner: "Tech / PM",
+            actions: ["Compile final as-built drawings", "Document all device settings and firmware versions", "Create user / admin handover guide", "Upload full package to LightTrack PM"],
+            docs: ["As-built drawings (PDF)", "Device inventory / firmware log", "User guide / admin guide", "Warranty documents"],
+          },
+        ],
+      },
+      {
+        id: 5,
+        name: "CLOSEOUT",
+        sub: "& Acceptance",
+        color: "#1E7F49",
+        accent: "#2EA060",
+        icon: "✅",
+        steps: [
+          {
+            tag: "SITE ACCEPTANCE",
+            label: "Client Site Walk",
+            owner: "PM / Client",
+            actions: ["Walk site with client representative", "Demonstrate system operation", "Resolve any punch list items", "Obtain signed site acceptance form"],
+            docs: ["Site acceptance form (signed)", "Punch list resolution log", "Acceptance walk photos"],
+          },
+          {
+            tag: "INVOICING",
+            label: "Final Invoice",
+            owner: "PM / Finance",
+            actions: ["Confirm all change orders captured", "Issue final invoice to client", "Upload invoice to LightTrack PM", "Confirm payment terms"],
+            docs: ["Final invoice", "Change order log", "Contract closeout confirmation"],
+          },
+          {
+            tag: "PROJECT CLOSED",
+            label: "Project Closed",
+            owner: "PM",
+            actions: ["Confirm all documents uploaded to LightTrack PM", "Conduct internal lessons-learned review", "Archive project record", "Update site asset register"],
+            docs: ["Full document package — archived", "Lessons learned notes", "Warranty start notice to client"],
+          },
+        ],
+      },
+    ];
+
+    function App() {
+      const [activePhase, setActivePhase] = useState(null);
+      const [activeStep, setActiveStep] = useState(null);
+
+      const selectedPhase = PHASES.find(p => p.id === activePhase);
+      const selectedStep = selectedPhase?.steps.find(s => s.tag === activeStep);
+
+      return (
+        <div style={{ fontFamily: "'IBM Plex Sans', 'Segoe UI', sans-serif", background: "#0D1B2E", minHeight: "100vh", color: "#E8EDF5" }}>
+
+          {/* Header */}
+          <div style={{
+            background: "linear-gradient(135deg, #0D1B2E 0%, #1A3560 60%, #0D1B2E 100%)",
+            borderBottom: "3px solid #E07B2A",
+            padding: "20px 32px 16px",
+            display: "flex", justifyContent: "space-between", alignItems: "flex-end",
+          }}>
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: "0.25em", color: "#E07B2A", fontWeight: 700, marginBottom: 4 }}>
+                UPLINK  |  A WATCO COMPANY
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.02em" }}>
+                LightTrack PM
+              </div>
+              <div style={{ fontSize: 13, color: "#8AAAD4", marginTop: 2 }}>
+                Project Workflow — Low Voltage · Cameras · Radio Services
+              </div>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 11, color: "#556B8A" }}>
+              <div>Click any phase or step to explore</div>
+              <div style={{ marginTop: 4, color: "#E07B2A" }}>
+                ● {PHASES.reduce((a, p) => a + p.steps.length, 0)} steps across {PHASES.length} phases
+              </div>
+            </div>
+          </div>
+
+          {/* Phase Rail */}
+          <div style={{ display: "flex", gap: 0, padding: "24px 24px 0", overflowX: "auto" }}>
+            {PHASES.map((phase, pi) => (
+              <div key={phase.id} style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 140 }}>
+                <div
+                  onClick={() => {
+                    if (activePhase === phase.id) { setActivePhase(null); setActiveStep(null); }
+                    else { setActivePhase(phase.id); setActiveStep(null); }
+                  }}
+                  style={{
+                    flex: 1,
+                    background: activePhase === phase.id
+                      ? `linear-gradient(135deg, ${phase.color}, ${phase.accent})`
+                      : "rgba(255,255,255,0.04)",
+                    border: `2px solid ${activePhase === phase.id ? phase.accent : "rgba(255,255,255,0.1)"}`,
+                    borderRadius: 12, padding: "16px 14px", cursor: "pointer",
+                    transition: "all 0.2s ease", textAlign: "center",
+                    boxShadow: activePhase === phase.id ? `0 8px 32px ${phase.color}55` : "none",
+                  }}
+                >
+                  <div style={{ fontSize: 24, marginBottom: 6 }}>{phase.icon}</div>
+                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.12em", color: activePhase === phase.id ? "#fff" : "#8AAAD4" }}>
+                    {phase.name}
+                  </div>
+                  <div style={{ fontSize: 11, color: activePhase === phase.id ? "rgba(255,255,255,0.8)" : "#556B8A", marginTop: 2 }}>
+                    {phase.sub}
+                  </div>
+                  <div style={{
+                    marginTop: 8, fontSize: 10,
+                    background: activePhase === phase.id ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.05)",
+                    borderRadius: 20, padding: "2px 8px", display: "inline-block",
+                    color: activePhase === phase.id ? "#fff" : "#556B8A",
+                  }}>
+                    {phase.steps.length} steps
+                  </div>
+                </div>
+                {pi < PHASES.length - 1 && (
+                  <div style={{ padding: "0 6px", color: "#E07B2A", fontSize: 18, fontWeight: 700, flexShrink: 0 }}>›</div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Step Flow */}
+          {selectedPhase && (
+            <div className="fade-in" style={{ padding: "20px 24px 0" }}>
+              <div style={{
+                background: `linear-gradient(90deg, ${selectedPhase.color}22, transparent)`,
+                border: `1px solid ${selectedPhase.accent}44`,
+                borderRadius: 12, padding: "16px 20px",
+              }}>
+                <div style={{ fontSize: 11, letterSpacing: "0.15em", color: selectedPhase.accent, fontWeight: 700, marginBottom: 12 }}>
+                  PHASE {selectedPhase.id} STEPS — CLICK A STEP FOR DETAILS
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                  {selectedPhase.steps.map((step, si) => (
+                    <div key={step.tag} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div
+                        onClick={() => setActiveStep(activeStep === step.tag ? null : step.tag)}
+                        style={{
+                          background: activeStep === step.tag
+                            ? `linear-gradient(135deg, ${selectedPhase.color}, ${selectedPhase.accent})`
+                            : "rgba(255,255,255,0.05)",
+                          border: `2px solid ${activeStep === step.tag ? selectedPhase.accent : "rgba(255,255,255,0.12)"}`,
+                          borderRadius: 10, padding: "10px 16px", cursor: "pointer",
+                          transition: "all 0.2s ease", minWidth: 130,
+                          boxShadow: activeStep === step.tag ? `0 4px 20px ${selectedPhase.color}44` : "none",
+                        }}
+                      >
+                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: activeStep === step.tag ? "rgba(255,255,255,0.7)" : "#556B8A", marginBottom: 4 }}>
+                          STEP {si + 1}
+                        </div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: activeStep === step.tag ? "#fff" : "#C4D4E8" }}>
+                          {step.label}
+                        </div>
+                        <div style={{
+                          marginTop: 6, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
+                          background: activeStep === step.tag ? "rgba(255,255,255,0.15)" : selectedPhase.color + "44",
+                          color: activeStep === step.tag ? "#fff" : selectedPhase.accent,
+                          borderRadius: 20, padding: "2px 7px", display: "inline-block",
+                        }}>
+                          {step.tag}
+                        </div>
+                      </div>
+                      {si < selectedPhase.steps.length - 1 && (
+                        <div style={{ color: selectedPhase.accent, fontSize: 16 }}>→</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step Detail Panel */}
+          {selectedStep && (
+            <div className="fade-in" style={{ padding: "16px 24px" }}>
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16,
+                background: "rgba(255,255,255,0.03)",
+                border: `1px solid ${selectedPhase.accent}55`,
+                borderRadius: 14, padding: 20,
+              }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                    <div style={{
+                      background: `linear-gradient(135deg, ${selectedPhase.color}, ${selectedPhase.accent})`,
+                      borderRadius: 10, padding: "8px 14px",
+                      fontSize: 11, fontWeight: 800, color: "#fff", letterSpacing: "0.1em",
+                    }}>
+                      {selectedStep.tag}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>{selectedStep.label}</div>
+                      <div style={{ fontSize: 11, color: "#8AAAD4", marginTop: 2 }}>
+                        Owner: <span style={{ color: selectedPhase.accent, fontWeight: 600 }}>{selectedStep.owner}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: selectedPhase.accent, marginBottom: 8 }}>
+                    KEY ACTIONS
+                  </div>
+                  {selectedStep.actions.map((a, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 7 }}>
+                      <div style={{
+                        width: 20, height: 20, borderRadius: "50%",
+                        background: `linear-gradient(135deg, ${selectedPhase.color}, ${selectedPhase.accent})`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 10, fontWeight: 800, color: "#fff", flexShrink: 0, marginTop: 1,
+                      }}>
+                        {i + 1}
+                      </div>
+                      <div style={{ fontSize: 13, color: "#C4D4E8", lineHeight: 1.5 }}>{a}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ borderLeft: "1px solid rgba(255,255,255,0.08)", paddingLeft: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: selectedPhase.accent, marginBottom: 12 }}>
+                    DOCUMENTS & DELIVERABLES
+                  </div>
+                  {selectedStep.docs.map((d, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      borderRadius: 8, padding: "9px 12px", marginBottom: 8,
+                    }}>
+                      <div style={{ fontSize: 14 }}>📄</div>
+                      <div style={{ fontSize: 12, color: "#C4D4E8" }}>{d}</div>
+                      <div style={{
+                        marginLeft: "auto", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
+                        background: selectedPhase.color + "55", color: selectedPhase.accent,
+                        borderRadius: 20, padding: "2px 7px", whiteSpace: "nowrap",
+                      }}>
+                        UPLOAD TO PM
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Full Flow Overview */}
+          <div style={{ padding: "20px 24px 32px" }}>
+            <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "#556B8A", fontWeight: 700, marginBottom: 12 }}>
+              COMPLETE WORKFLOW OVERVIEW
+            </div>
+            <div style={{
+              display: "flex", gap: 0, overflowX: "auto",
+              background: "rgba(255,255,255,0.02)",
+              borderRadius: 14, border: "1px solid rgba(255,255,255,0.06)", padding: 16,
+            }}>
+              {PHASES.map((phase, pi) => (
+                <div key={phase.id} style={{ display: "flex", alignItems: "flex-start", flex: 1, minWidth: 0 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      background: `linear-gradient(135deg, ${phase.color}, ${phase.accent})`,
+                      borderRadius: 8, padding: "6px 10px", marginBottom: 8, textAlign: "center",
+                    }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: "#fff", letterSpacing: "0.1em" }}>
+                        {phase.icon} {phase.name} {phase.sub}
+                      </div>
+                    </div>
+                    {phase.steps.map((step, si) => (
+                      <div key={step.tag}>
+                        {si > 0 && (
+                          <div style={{ marginLeft: 12, color: phase.accent, fontSize: 10, lineHeight: 1 }}>↓</div>
+                        )}
+                        <div
+                          onClick={() => { setActivePhase(phase.id); setActiveStep(step.tag); }}
+                          style={{
+                            width: "100%",
+                            background: activeStep === step.tag ? `${phase.color}CC` : "rgba(255,255,255,0.04)",
+                            border: `1px solid ${activeStep === step.tag ? phase.accent : "rgba(255,255,255,0.08)"}`,
+                            borderRadius: 6, padding: "5px 8px", cursor: "pointer",
+                            transition: "all 0.15s ease", marginBottom: 2,
+                          }}
+                        >
+                          <div style={{ fontSize: 10, fontWeight: 600, color: activeStep === step.tag ? "#fff" : "#8AAAD4", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {step.label}
+                          </div>
+                          <div style={{ fontSize: 8, color: phase.accent, letterSpacing: "0.06em", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {step.tag}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {pi < PHASES.length - 1 && (
+                    <div style={{ padding: "40px 6px 0", color: "#E07B2A", fontSize: 16, flexShrink: 0 }}>›</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
